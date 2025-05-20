@@ -1,0 +1,36 @@
+server:
+  port: 8081
+mybatis-plus:
+  configuration:
+    # MyBatis ??
+    map-underscore-to-camel-case: true
+  global-config:
+    # ????
+    db-config:
+      # ?????
+      id-type: auto
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.150.103:3306/CloudGallery?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: 123321
+
+  data:
+    redis:
+      database: 1
+      host: 192.168.150.103
+      port: 6379
+      password: 123321
+      timeout: 0
+
+
+minio:
+  endpoint: http://192.168.150.103:9000
+  fileHost: http://192.168.150.103:9000
+  bucketName: cloud-gallery            # 桶名称
+  accessKey: minio                    # 账号
+  secretKey: minio123                 # 密码
+
+
+

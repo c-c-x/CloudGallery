@@ -1,0 +1,4 @@
+SnowFlake:
+  workerId: 1
+  dataCenterId: 1
+  sequence: 1
