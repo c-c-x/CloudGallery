@@ -4,11 +4,13 @@ mybatis-plus:
   configuration:
     # MyBatis ??
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     # ????
     db-config:
       # ?????
       id-type: auto
+
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -23,6 +25,9 @@ spring:
       port: 6379
       password: 123321
       timeout: 0
+  # 导入数据文件
+  config:
+    import: "data.yaml"
 
 
 minio:

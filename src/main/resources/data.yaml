@@ -1,4 +1,8 @@
-SnowFlake:
+#雪花算法机器码
+nowFlake:
   workerId: 1
   dataCenterId: 1
   sequence: 1
+#aes加密密码
+aes:
+  password: 1767995016!
