@@ -10,6 +10,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -25,12 +26,13 @@ public class JWTUtils {
     /**
      * 过期时间
      */
-    private static final int EXPIRE_TIME = 86400;
+    private static final int EXPIRE_TIME = 1800;
+//    private static final int EXPIRE_TIME = 10;
 
     /**
      * 根据用户信息生成令牌
      * @param user 用户信息
-     * @return
+     * @return JWT令牌
      */
     public static String createJWT(User user){
         HashMap<String, Object> map = new HashMap<>();
@@ -82,6 +84,91 @@ public class JWTUtils {
             // 签名无效或其他验证失败
             throw new JWTVerificationException("JWT 验证失败: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 验证JWT令牌是否已过期
+     * @param token JWT令牌
+     * @return true表示已过期，false表示未过期或令牌无效
+     */
+    public static boolean isTokenExpired(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return true; // 空令牌视为过期
+        }
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(SIGN);
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            DecodedJWT jwt = verifier.verify(token);
+            // 检查过期时间
+            return jwt.getExpiresAt().before(new Date());
+        } catch (TokenExpiredException e) {
+            // 明确捕获过期异常
+            return true;
+        } catch (JWTVerificationException e) {
+            // 签名无效、令牌被篡改等情况，视为无效令牌（逻辑上等同于过期）
+            return true;
+        } catch (Exception e) {
+            // 其他异常，如解析错误
+            return true;
+        }
+    }
+
+
+    /**
+     * 即使令牌过期也能获取声明信息
+     * @param token JWT令牌
+     * @return 令牌声明信息，若令牌无效则返回null
+     */
+    public static DecodedJWT getClaimsFromExpiredToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            // 先尝试常规验证
+            Algorithm algorithm = Algorithm.HMAC256(SIGN);
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .build();
+            return verifier.verify(token);
+        } catch (TokenExpiredException e) {
+            // 令牌过期，使用不验证过期时间的方式解析
+            try {
+                // 解析令牌但不进行验证（包括过期时间）
+                DecodedJWT decodedJWT = JWT.decode(token);
+                // 单独验证签名，确保令牌未被篡改
+                Algorithm algorithm = Algorithm.HMAC256(SIGN);
+                algorithm.verify(decodedJWT);
+                return decodedJWT;
+            } catch (Exception ex) {
+                // 签名无效或其他错误
+                return null;
+            }
+        } catch (Exception e) {
+            // 其他验证错误
+            return null;
+        }
+    }
+
+    /**
+     * 从过期令牌中获取用户信息
+     * @param token JWT令牌
+     * @return 用户信息，若令牌无效则返回null
+     */
+    public static User getUserInfoFromExpiredToken(String token) {
+        DecodedJWT decodedJWT = getClaimsFromExpiredToken(token);
+        if (decodedJWT == null) {
+            return null;
+        }
+
+        long id = decodedJWT.getClaim("id").asLong();
+        String userName = decodedJWT.getClaim("userName").asString();
+        int status = decodedJWT.getClaim("status").asInt();
+
+        User user = new User();
+        user.setId(id);
+        user.setUserName(userName);
+        user.setStatus(status);
+        return user;
     }
 
     public static void main(String[] args) {

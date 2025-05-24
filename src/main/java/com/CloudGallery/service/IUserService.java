@@ -1,5 +1,6 @@
 package com.CloudGallery.service;
 
+import com.CloudGallery.domain.VO.LoginUserVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.CloudGallery.common.response.Result;
 import com.CloudGallery.domain.po.User;
@@ -20,5 +21,5 @@ public interface IUserService extends IService<User> {
      * @param loginUserDTO 登录信息
      * @return 登录结果
      */
-    Result<String> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request);
+    Result<LoginUserVO> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request);
 }

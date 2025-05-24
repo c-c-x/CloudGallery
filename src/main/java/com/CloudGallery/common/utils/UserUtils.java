@@ -11,10 +11,9 @@ public class UserUtils {
     }
 
     /**
-     * 获取当前登录用户的 ID（从 Spring Security 上下文）
      * @return 用户 ID（未登录时返回 null）
      */
     public static Long getUserId() {
-      return 1L;
+      return BaseContext.getCurrentUser().getId();
     }
 }

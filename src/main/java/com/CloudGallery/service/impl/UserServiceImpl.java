@@ -3,8 +3,11 @@ package com.CloudGallery.service.impl;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.CloudGallery.common.utils.IpUtils;
 import com.CloudGallery.common.utils.JWTUtils;
+import com.CloudGallery.common.utils.UUIDUtils;
+import com.CloudGallery.constants.RedisConstants;
 import com.CloudGallery.constants.RightsLvConstants;
 import com.CloudGallery.constants.StatusConstants;
+import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.domain.po.LoginLog;
 import com.CloudGallery.domain.po.Rights;
 import com.CloudGallery.service.ILoginLogService;
@@ -25,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户服务实现类
@@ -113,17 +118,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      * @return 登录结果
      */
     @Override
-    public Result<String> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request) {
-        try {
+    @Transactional(rollbackFor = Exception.class)
+    public Result<LoginUserVO> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request) {
             //校验登录信息
             User user = this.getOne(new LambdaQueryWrapper<User>()
-                    .eq(loginUserDTO.getUserName() != null, User::getUserName, loginUserDTO.getUserName())
+                    .eq(User::getUserName, loginUserDTO.getUserName())
                     .eq(User::getStatus, StatusConstants.YES_STATUS));
-            String password = DesensitizationUtils.decrypt(user.getPassword());
-            if (!password.equals(loginUserDTO.getPassword())) {
-                throw new CgServiceException("用户名或密码错误");
+            try {
+                String password = DesensitizationUtils.decrypt(user.getPassword());
+                if (!password.equals(loginUserDTO.getPassword())) {
+                    throw new CgServiceException("用户名或密码错误");
+                }
+            }catch (Exception e) {
+                throw new CgServiceException("登录失败," + e.getMessage());
             }
-
+            //获取用户ip
             String ip = IpUtils.getIpAddr(request);
             String cityInfo = null;
             try {
@@ -139,9 +148,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     .ipAttribution(cityInfo)
                     .build();
             loginLogService.save(loginLog);
-            return Result.success(JWTUtils.createJWT(user));
-        } catch (Exception e) {
-            throw new CgServiceException("登录失败," + e.getMessage());
-        }
+
+            //获得JWT和REFRESH_TOKEN
+            String jwt = JWTUtils.createJWT(user);
+            String REFRESH_TOKEN = UUIDUtils.generateUUIDWithoutHyphens();
+            //保存UUID到redis设置刷新token
+            stringRedisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+user.getId(),REFRESH_TOKEN,RedisConstants.TOKEN_REFRESH_TIME, TimeUnit.DAYS);
+            LoginUserVO vo = LoginUserVO.builder()
+                    .JWT(jwt)
+                    .REFRESH_TOKEN(REFRESH_TOKEN)
+                    .build();
+            return Result.success(vo);
     }
 }
