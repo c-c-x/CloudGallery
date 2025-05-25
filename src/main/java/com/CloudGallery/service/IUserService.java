@@ -1,6 +1,8 @@
 package com.CloudGallery.service;
 
+import com.CloudGallery.domain.DTO.UpdateUserDTO;
 import com.CloudGallery.domain.DTO.UserPageDTO;
+import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.domain.VO.UserPageVO;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -38,4 +40,19 @@ public interface IUserService extends IService<User> {
      * @return 登出结果
      */
     Result<Boolean> loginOut();
+
+    /**
+     * 修改用户信息
+     * @param updateUserDTO 修改用户信息
+     * @return 修改结果
+     */
+    Result<Boolean> updateUser(UpdateUserDTO updateUserDTO);
+
+
+    /**
+     * 获取指定用户信息
+     * @param id 用户id
+     * @return  用户信息
+     */
+    Result<ByIdUserVO> getUserById(Long id);
 }

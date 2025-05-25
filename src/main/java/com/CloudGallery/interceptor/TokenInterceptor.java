@@ -27,8 +27,8 @@ public class TokenInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              @NotNull HttpServletResponse response,
                              @NotNull Object handler) throws Exception {
-        //获取refreshToken
-        String refreshToken = request.getHeader("REFRESH_TOKEN");
+        //  获取refreshToken
+        String refreshToken = request.getHeader("refresh_token");
         //  获取请求头中的jwt
         String token = request.getHeader("Authorization");
         if (token == null || token.isEmpty()) {
@@ -50,9 +50,9 @@ public class TokenInterceptor implements HandlerInterceptor {
             }
             String jwt = JWTUtils.createJWT(user);
             BaseContext.setCurrentUser(user);
-            // 3.5 将新JWT写入响应头（关键修改）
+            // 将新JWT写入响应头（关键修改）
             response.setHeader("Authorization",jwt);
-            // 可选：解决跨域时客户端无法获取响应头的问题
+            // 解决跨域时客户端无法获取响应头的问题
             response.setHeader("Access-Control-Expose-Headers", "Authorization");
             return true;
         }

@@ -2,10 +2,11 @@ package com.CloudGallery.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import cn.hutool.core.util.ObjectUtil;
 import com.CloudGallery.common.utils.*;
 import com.CloudGallery.constants.*;
-import com.CloudGallery.domain.DTO.UserListDTO;
-import com.CloudGallery.domain.DTO.UserPageDTO;
+import com.CloudGallery.domain.DTO.*;
+import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.domain.PO.LoginLog;
 import com.CloudGallery.domain.PO.Rights;
@@ -17,8 +18,6 @@ import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.response.Result;
 import com.CloudGallery.domain.PO.User;
 import com.CloudGallery.mapper.UserMapper;
-import com.CloudGallery.domain.DTO.EnrollUserDTO;
-import com.CloudGallery.domain.DTO.LoginUserDTO;
 import com.CloudGallery.service.ICgRightsService;
 import com.CloudGallery.service.IUserService;
 import com.github.pagehelper.PageHelper;
@@ -219,4 +218,66 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         throw new CgServiceException("身份已过期");
     }
+
+
+    /**
+     * 修改用户信息
+     * @param updateUserDTO 修改用户信息
+     * @return 修改结果
+     */
+    @Override
+    public Result<Boolean> updateUser(UpdateUserDTO updateUserDTO) {
+        if (ObjectUtil.isEmpty(updateUserDTO)){
+            throw new CgServiceException("修改信息不能为空");
+        }
+
+        try {
+            User user = User.builder()
+                    .id(updateUserDTO.getId())
+                    .userName(updateUserDTO.getUserName())
+                    .password(DesensitizationUtils.decrypt(updateUserDTO.getPassword()))
+                    .nickName(updateUserDTO.getNickName())
+                    .phone(updateUserDTO.getPhone())
+                    .email(updateUserDTO.getEmail())
+                    .gender(updateUserDTO.getGender())
+                    .idNumber(updateUserDTO.getIdNumber())
+                    .status(updateUserDTO.getStatus())
+                    .build();
+            return userMapper.updateById(user) != 0 ? Result.success() : Result.fail();
+        }catch (Exception e){
+            throw new CgServiceException("修改用户信息失败" + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取指定用户信息
+     * @param id 用户id
+     * @return  用户信息
+     */
+    @Override
+    public Result<ByIdUserVO> getUserById(Long id) {
+        if (ObjectUtil.isEmpty(id)){
+            throw new CgServiceException("用户id不能为空");
+        }
+
+        User user = this.getById(id);
+        if (ObjectUtil.isEmpty(user)){
+            throw new CgServiceException("用户不存在");
+        }
+
+        //脱敏放回视图
+        ByIdUserVO vo = ByIdUserVO.builder()
+                .id(user.getId())
+                .userName(user.getUserName())
+                .nickName(user.getNickName())
+                .phone(UserUtils.maskPhone(user.getPhone()))
+                .email(UserUtils.maskEmail(user.getEmail()))
+                .gender(user.getGender())
+                .idNumber(UserUtils.maskIdNumber(user.getIdNumber()))
+                .status(user.getStatus())
+                .build();
+        return Result.success(vo);
+    }
+
 }
