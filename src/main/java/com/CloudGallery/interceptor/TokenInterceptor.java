@@ -4,7 +4,7 @@ import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.utils.BaseContext;
 import com.CloudGallery.common.utils.JWTUtils;
 import com.CloudGallery.constants.RedisConstants;
-import com.CloudGallery.domain.po.User;
+import com.CloudGallery.domain.PO.User;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

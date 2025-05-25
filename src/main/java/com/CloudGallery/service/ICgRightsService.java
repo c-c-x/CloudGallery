@@ -1,6 +1,6 @@
 package com.CloudGallery.service;
 
-import com.CloudGallery.domain.po.Rights;
+import com.CloudGallery.domain.PO.Rights;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**

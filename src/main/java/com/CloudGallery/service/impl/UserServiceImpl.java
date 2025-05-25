@@ -1,34 +1,38 @@
 package com.CloudGallery.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
-import com.CloudGallery.common.utils.IpUtils;
-import com.CloudGallery.common.utils.JWTUtils;
-import com.CloudGallery.common.utils.UUIDUtils;
-import com.CloudGallery.constants.RedisConstants;
-import com.CloudGallery.constants.RightsLvConstants;
-import com.CloudGallery.constants.StatusConstants;
+import com.CloudGallery.common.utils.*;
+import com.CloudGallery.constants.*;
+import com.CloudGallery.domain.DTO.UserListDTO;
+import com.CloudGallery.domain.DTO.UserPageDTO;
 import com.CloudGallery.domain.VO.LoginUserVO;
-import com.CloudGallery.domain.po.LoginLog;
-import com.CloudGallery.domain.po.Rights;
+import com.CloudGallery.domain.PO.LoginLog;
+import com.CloudGallery.domain.PO.Rights;
+import com.CloudGallery.domain.VO.UserPageVO;
 import com.CloudGallery.service.ILoginLogService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.response.Result;
-import com.CloudGallery.common.utils.DesensitizationUtils;
-import com.CloudGallery.domain.po.User;
+import com.CloudGallery.domain.PO.User;
 import com.CloudGallery.mapper.UserMapper;
 import com.CloudGallery.domain.DTO.EnrollUserDTO;
 import com.CloudGallery.domain.DTO.LoginUserDTO;
 import com.CloudGallery.service.ICgRightsService;
 import com.CloudGallery.service.IUserService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,6 +66,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Resource
     private ILoginLogService loginLogService;
 
+    /**
+     * 用户mapper
+     */
+    @Resource
+    private UserMapper userMapper;
 
     /**
      * 注册用户
@@ -120,44 +129,94 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Result<LoginUserVO> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request) {
-            //校验登录信息
-            User user = this.getOne(new LambdaQueryWrapper<User>()
-                    .eq(User::getUserName, loginUserDTO.getUserName())
-                    .eq(User::getStatus, StatusConstants.YES_STATUS));
-            try {
-                String password = DesensitizationUtils.decrypt(user.getPassword());
-                if (!password.equals(loginUserDTO.getPassword())) {
-                    throw new CgServiceException("用户名或密码错误");
-                }
-            }catch (Exception e) {
-                throw new CgServiceException("登录失败," + e.getMessage());
-            }
-            //获取用户ip
-            String ip = IpUtils.getIpAddr(request);
-            String cityInfo = null;
-            try {
-                cityInfo = IpUtils.getCityInfo(ip);
-            } catch (Exception e) {
-                log.error("获取ip归属地信息失败！");
-            }
-            //保存登录日志
-            LoginLog loginLog = LoginLog.builder()
-                    .userId(user.getId())
-                    .userName(user.getUserName())
-                    .userIp(ip)
-                    .ipAttribution(cityInfo)
-                    .build();
-            loginLogService.save(loginLog);
+        //校验登录信息
+        User user = this.getOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUserName, loginUserDTO.getUserName())
+                .eq(User::getStatus, StatusConstants.YES_STATUS));
+        if (user == null){
+            throw new CgServiceException("用户名或密码错误");
+        }
 
-            //获得JWT和REFRESH_TOKEN
-            String jwt = JWTUtils.createJWT(user);
-            String REFRESH_TOKEN = UUIDUtils.generateUUIDWithoutHyphens();
-            //保存UUID到redis设置刷新token
-            stringRedisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+user.getId(),REFRESH_TOKEN,RedisConstants.TOKEN_REFRESH_TIME, TimeUnit.DAYS);
-            LoginUserVO vo = LoginUserVO.builder()
-                    .JWT(jwt)
-                    .REFRESH_TOKEN(REFRESH_TOKEN)
-                    .build();
-            return Result.success(vo);
+        //验证登录权限是否足够
+        if (!loginUserDTO.getPermissions().equals(LoginConstants.ADMIN) &&
+                !loginUserDTO.getPermissions().equals(LoginConstants.USER)){
+            throw new CgServiceException("登录失败，权限不足");
+        }
+        Set<String> roles = userMapper.getRoles(user.getId());
+        if (loginUserDTO.getPermissions().equals(LoginConstants.ADMIN)) {
+            if (!roles.contains(RoleConstants.ADMIN )|| StringUtils.isEmpty(loginUserDTO.getPermissions())) {
+                throw new CgServiceException("登录失败，权限不足");
+            }else if (!roles.contains(RoleConstants.CG_USER)){
+                throw new CgServiceException("登录失败，权限不足");
+            }
+        }
+
+        try {
+            String password = DesensitizationUtils.decrypt(user.getPassword());
+            if (!password.equals(loginUserDTO.getPassword())) {
+                throw new CgServiceException("用户名或密码错误");
+            }
+        } catch (Exception e) {
+            throw new CgServiceException("登录失败," + e.getMessage());
+        }
+
+        //获取用户登录日志
+        String ip = IpUtils.getIpAddr(request);
+        String cityInfo = null;
+        try {
+            cityInfo = IpUtils.getCityInfo(ip);
+        } catch (Exception e) {
+            log.error("获取ip归属地信息失败！");
+        }
+        LoginLog loginLog = LoginLog.builder()
+                .userId(user.getId())
+                .userName(user.getUserName())
+                .userIp(ip)
+                .ipAttribution(cityInfo)
+                .build();
+        loginLogService.save(loginLog);
+
+        //获得JWT和REFRESH_TOKEN
+        String jwt = JWTUtils.createJWT(user);
+        String REFRESH_TOKEN = UUIDUtils.generateUUIDWithoutHyphens();
+        //保存UUID到redis设置刷新token
+        stringRedisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY + user.getId(), REFRESH_TOKEN, RedisConstants.TOKEN_REFRESH_TIME, TimeUnit.DAYS);
+        LoginUserVO vo = LoginUserVO.builder()
+                .JWT(jwt)
+                .REFRESH_TOKEN(REFRESH_TOKEN)
+                .build();
+        return Result.success(vo);
+    }
+
+
+    /**
+     * 获取用户列表
+     * @param userPageDTO
+     * @return 用户列表
+     */
+    @Override
+    public Result<UserPageVO> getUserList(UserPageDTO userPageDTO) {
+        //获取用户列表
+        PageHelper.startPage(userPageDTO.getPageNum(), userPageDTO.getPageSize());
+        List<UserListDTO> userPageVOList = userMapper.getUserList(userPageDTO);
+        PageInfo pageInfo = new PageInfo(userPageVOList);
+        UserPageVO vo = new UserPageVO();
+        BeanUtil.copyProperties(pageInfo,vo);
+        return Result.success(vo);
+    }
+
+
+    /**
+     * 登出
+     * @return 登出结果
+     */
+    @Override
+    public Result<Boolean> loginOut() {
+        Long userId = UserUtils.getUserId();
+        Boolean delete = stringRedisTemplate.delete(RedisConstants.USER_TOKEN_KEY + userId);
+        if (delete){
+            return Result.success();
+        }
+        throw new CgServiceException("身份已过期");
     }
 }

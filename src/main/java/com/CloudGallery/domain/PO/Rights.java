@@ -1,4 +1,4 @@
-package com.CloudGallery.domain.po;
+package com.CloudGallery.domain.PO;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;

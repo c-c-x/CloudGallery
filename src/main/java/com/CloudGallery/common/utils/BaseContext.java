@@ -1,6 +1,6 @@
 package com.CloudGallery.common.utils;
 
-import com.CloudGallery.domain.po.User;
+import com.CloudGallery.domain.PO.User;
 
 /**
  * 基于ThreadLocal封装工具类，用于保存和获取当前登录用户ID

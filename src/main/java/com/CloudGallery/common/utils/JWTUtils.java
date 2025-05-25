@@ -1,7 +1,6 @@
 package com.CloudGallery.common.utils;
 
-import cn.hutool.jwt.Claims;
-import com.CloudGallery.domain.po.User;
+import com.CloudGallery.domain.PO.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;

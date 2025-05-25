@@ -17,4 +17,10 @@ public class LoginUserDTO {
     @NotNull("密码不能为空")
     @Length(max = 16,min = 6,message = "密码长度在6-16位之间" )
     private String password;
+
+    /**
+     * 登录权限区分
+     */
+    @NotNull("权限字符不能为空")
+    private String permissions;
 }

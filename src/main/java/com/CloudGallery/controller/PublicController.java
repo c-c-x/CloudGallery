@@ -1,26 +1,14 @@
 package com.CloudGallery.controller;
 
-import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.response.Result;
-import com.CloudGallery.common.utils.DesensitizationUtils;
-import com.CloudGallery.common.utils.IpUtils;
-import com.CloudGallery.common.utils.JWTUtils;
-import com.CloudGallery.common.utils.UserUtils;
-import com.CloudGallery.constants.StatusConstants;
 import com.CloudGallery.domain.DTO.EnrollUserDTO;
 import com.CloudGallery.domain.DTO.LoginUserDTO;
 import com.CloudGallery.domain.VO.LoginUserVO;
-import com.CloudGallery.domain.po.LoginLog;
-import com.CloudGallery.domain.po.User;
-import com.CloudGallery.service.ILoginLogService;
 import com.CloudGallery.service.IUserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 公共控制层
@@ -57,6 +45,15 @@ public class PublicController {
         return userService.loginUser(loginUserDTO,request);
     }
 
+
+    /**
+     * 登出
+     * @return 登出结果
+     */
+    @GetMapping("/loginOut")
+    public Result<Boolean> loginOut(){
+        return userService.loginOut();
+    }
 
     @PostMapping("/upload")
     public void upload(HttpServletRequest request){

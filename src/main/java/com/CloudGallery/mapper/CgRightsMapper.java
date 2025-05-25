@@ -1,6 +1,6 @@
 package com.CloudGallery.mapper;
 
-import com.CloudGallery.domain.po.Rights;
+import com.CloudGallery.domain.PO.Rights;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 

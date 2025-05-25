@@ -1,6 +1,6 @@
 package com.CloudGallery.service.impl;
 
-import com.CloudGallery.domain.po.LoginLog;
+import com.CloudGallery.domain.PO.LoginLog;
 
 import com.CloudGallery.mapper.LoginLogMapper;
 

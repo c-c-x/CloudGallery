@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("cg_rights")
 @Builder
 public class LoginUserVO {
 
