@@ -63,4 +63,12 @@ public interface IUserService extends IService<User> {
      * @return 设置结果
      */
     Result<Boolean> setAdmin(Long id);
+
+
+    /**
+     * 移除管理员
+     * @param id 用户id
+     * @return 移除结果
+     */
+    Result<Boolean> removeAdmin(Long id);
 }

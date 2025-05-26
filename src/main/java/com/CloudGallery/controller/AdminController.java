@@ -71,4 +71,15 @@ public class AdminController {
     public Result<Boolean> setAdmin(@PathVariable Long id){
         return userService.setAdmin(id);
     }
+
+    /**
+     * 移除管理员
+     * @param id 用户id
+     * @return 移除结果
+     */
+    @GetMapping("/removeAdmin/{id}")
+    @Permission(PermissionType.ADMIN)
+    public Result<Boolean> removeAdmin(@PathVariable Long id){
+        return userService.removeAdmin(id);
+    }
 }

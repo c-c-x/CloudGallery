@@ -315,13 +315,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             throw new CgServiceException("用户不存在");
         }
 
+        //  获取管理员角色id
         long roleId =  roleMapper.getRoleId(RoleConstants.ADMIN);
 
         //判断是否已经是管理员
-        UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
-                .eq(UserRole::getUserId, id)
-                .eq(UserRole::getRoleId, roleId));
-        if (ObjectUtil.isNotEmpty(role)){
+
+        if (isRole(id,roleId)){
             throw new CgServiceException("用户已经是管理员");
         }
 
@@ -334,4 +333,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 Result.success() : Result.fail();
     }
 
+    /**
+     * 移除管理员
+     * @param id 用户id
+     * @return 移除结果
+     */
+    @Override
+    public Result<Boolean> removeAdmin(Long id) {
+        Long userId = UserUtils.getUserId();
+        if (userId.equals(id)){
+            throw new CgServiceException("不能移除自己");
+        }
+
+        //  获取管理员角色id
+        long roleId =  roleMapper.getRoleId(RoleConstants.ADMIN);
+        UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
+                .eq(UserRole::getUserId, id)
+                .eq(UserRole::getRoleId, roleId));
+        if (ObjectUtil.isEmpty(role)){
+           throw new CgServiceException("用户不是管理员");
+        }
+
+        return userRoleService.removeById(role.getId()) ? Result.success() : Result.fail();
+
+    }
+
+
+    /**
+     * 判断是否为某个角色
+     * @param userId 用户id
+     * @param roleId 角色id
+     * @return 判断结果
+     */
+    private boolean isRole(Long userId,Long roleId){
+        UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getRoleId, roleId));
+        return ObjectUtil.isNotEmpty(role);
+
+    }
 }
