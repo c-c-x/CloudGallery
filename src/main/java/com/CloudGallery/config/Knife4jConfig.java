@@ -13,6 +13,7 @@ public class Knife4jConfig {
 
     @Bean
     public OpenAPI springShopOpenAPI() {
+        System.out.println("文档地址:http://127.0.0.1:8081/doc.html#/home");
         return new OpenAPI()
         // 接口文档标题
         .info(new Info().title("API接口文档")

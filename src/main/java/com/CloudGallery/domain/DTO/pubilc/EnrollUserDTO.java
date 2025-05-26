@@ -1,4 +1,4 @@
-package com.CloudGallery.domain.DTO;
+package com.CloudGallery.domain.DTO.pubilc;
 
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;

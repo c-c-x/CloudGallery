@@ -1,8 +1,7 @@
 package com.CloudGallery.mapper;
 
-import com.CloudGallery.domain.DTO.UserListDTO;
-import com.CloudGallery.domain.DTO.UserPageDTO;
-import com.CloudGallery.domain.VO.UserPageVO;
+import com.CloudGallery.domain.DTO.admin.UserListDTO;
+import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.CloudGallery.domain.PO.User;
 import org.apache.ibatis.annotations.Mapper;

@@ -1,8 +1,7 @@
 package com.CloudGallery;
 
-import com.CloudGallery.domain.DTO.UserListDTO;
-import com.CloudGallery.domain.DTO.UserPageDTO;
-import com.CloudGallery.domain.VO.UserPageVO;
+import com.CloudGallery.domain.DTO.admin.UserListDTO;
+import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.CloudGallery.mapper.UserMapper;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;

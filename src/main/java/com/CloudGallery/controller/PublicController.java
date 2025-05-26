@@ -1,8 +1,11 @@
 package com.CloudGallery.controller;
 
 import com.CloudGallery.common.response.Result;
-import com.CloudGallery.domain.DTO.EnrollUserDTO;
-import com.CloudGallery.domain.DTO.LoginUserDTO;
+import com.CloudGallery.common.utils.BaseContext;
+import com.CloudGallery.common.utils.UserUtils;
+import com.CloudGallery.domain.DTO.ThreadLocalUser;
+import com.CloudGallery.domain.DTO.pubilc.EnrollUserDTO;
+import com.CloudGallery.domain.DTO.pubilc.LoginUserDTO;
 import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.service.IUserService;
 import jakarta.annotation.Resource;
@@ -57,5 +60,16 @@ public class PublicController {
 
     @PostMapping("/upload")
     public void upload(HttpServletRequest request){
+        ThreadLocalUser currentUser = BaseContext.getCurrentUser();
+        System.out.println(currentUser.getId());
+        System.out.println(UserUtils.maskPhone(currentUser.getPhone()));
+        System.out.println(UserUtils.maskEmail(currentUser.getEmail()));
+        System.out.println(UserUtils.maskIdNumber(currentUser.getIdNumber()));
+        System.out.println(currentUser.getGender());
+        System.out.println(currentUser.getStatus());
+        System.out.println(currentUser.getRoles());
+        System.out.println(currentUser.getUserName());
+        System.out.println(currentUser.getPassword());
+        System.out.println(currentUser.getNickName());
     }
 }

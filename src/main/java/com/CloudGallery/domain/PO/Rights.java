@@ -7,9 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serial;
 import java.io.Serializable;
 import com.CloudGallery.common.domain.pojo;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
@@ -24,6 +22,8 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @TableName("cg_rights")
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class Rights extends pojo implements Serializable{
 

@@ -4,6 +4,22 @@ package com.CloudGallery.constants;
  * 权益等级常量
  */
 public class RightsLvConstants {
+
+    /**
+     * 一级
+     */
+    public static final String LV_ONE = "lv_one";
+
+    /**
+     * 二级
+     */
+    public static final String LV_TWO = "lv_two";
+
+    /**
+     * 三级
+     */
+    public static final String LV_THREE = "lv_three";
+
     /**
      * 一级
      */

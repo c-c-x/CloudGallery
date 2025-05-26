@@ -1,13 +1,7 @@
 package com.CloudGallery.domain.VO;
 
-import com.CloudGallery.domain.DTO.UserListDTO;
-import com.CloudGallery.domain.VO.PageVo;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.CloudGallery.domain.DTO.admin.UserListDTO;
 import lombok.*;
-import lombok.experimental.Accessors;
 
 import java.util.List;
 

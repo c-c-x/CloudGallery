@@ -1,9 +1,10 @@
 package com.CloudGallery.domain.PO;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 
@@ -12,7 +13,7 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 系统角色表
+ * 系统字典数据表
  * </p>
  *
  * @author author
@@ -21,12 +22,13 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("sys_role")
+@TableName("sys_dict_data")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SysRole implements Serializable {
+public class SysDictData implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -36,34 +38,38 @@ public class SysRole implements Serializable {
     private Long id;
 
     /**
-     * 角色编码（唯一，如"admin"）
+     * 关联的字典类型编码（对应sys_dict.type_code）
      */
-    @TableField("role_code")
-    private String roleCode;
+    private String dictType;
 
     /**
-     * 角色名称（如"管理员"）
+     * 字典标签（展示值，如"男"）
      */
-    @TableField("role_name")
-    private String roleName;
+    private String label;
 
     /**
-     * 角色描述（可选）
+     * 字典值（存储值，如"1"）
      */
-    @TableField("description")
-    private String description;
+    private String value;
+
+    /**
+     * 排序（数值越小越靠前）
+     */
+    private Integer sort;
 
     /**
      * 状态（1=启用，0=禁用）
      */
-    @TableField("status")
-    private Boolean status;
+    private Integer status;
 
     /**
      * 创建时间
      */
-    @TableField("create_time")
     private LocalDateTime createTime;
 
+    /**
+     * 更新人
+     */
+    private Long createUser;
 
 }

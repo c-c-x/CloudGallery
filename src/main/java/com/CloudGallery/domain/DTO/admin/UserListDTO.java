@@ -1,4 +1,4 @@
-package com.CloudGallery.domain.DTO;
+package com.CloudGallery.domain.DTO.admin;
 
 import lombok.Data;
 

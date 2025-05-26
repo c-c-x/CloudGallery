@@ -3,7 +3,7 @@
 <mapper namespace="com.CloudGallery.mapper.UserMapper">
 
 
-    <select id="getUserList" resultType="com.CloudGallery.domain.DTO.UserListDTO">
+    <select id="getUserList" resultType="com.CloudGallery.domain.DTO.admin.UserListDTO">
                 select id,user_name,nick_name,phone,email,gender,id_number
                 from cg_user
                 <where>

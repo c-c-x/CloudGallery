@@ -1,16 +1,15 @@
 package com.CloudGallery.service;
 
-import com.CloudGallery.domain.DTO.UpdateUserDTO;
-import com.CloudGallery.domain.DTO.UserPageDTO;
+import com.CloudGallery.domain.DTO.admin.UpdateUserDTO;
+import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.domain.VO.UserPageVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.CloudGallery.common.response.Result;
 import com.CloudGallery.domain.PO.User;
-import com.CloudGallery.domain.DTO.EnrollUserDTO;
-import com.CloudGallery.domain.DTO.LoginUserDTO;
-import com.github.pagehelper.PageInfo;
+import com.CloudGallery.domain.DTO.pubilc.EnrollUserDTO;
+import com.CloudGallery.domain.DTO.pubilc.LoginUserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface IUserService extends IService<User> {

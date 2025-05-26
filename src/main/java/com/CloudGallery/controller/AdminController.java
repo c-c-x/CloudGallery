@@ -4,14 +4,12 @@ package com.CloudGallery.controller;
 import com.CloudGallery.annotations.Permission;
 import com.CloudGallery.common.enums.PermissionType;
 import com.CloudGallery.common.response.Result;
-import com.CloudGallery.domain.DTO.UpdateUserDTO;
-import com.CloudGallery.domain.DTO.UserPageDTO;
+import com.CloudGallery.domain.DTO.admin.UpdateUserDTO;
+import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.UserPageVO;
 import com.CloudGallery.service.IUserService;
-import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,4 +80,6 @@ public class AdminController {
     public Result<Boolean> removeAdmin(@PathVariable Long id){
         return userService.removeAdmin(id);
     }
+
+
 }
