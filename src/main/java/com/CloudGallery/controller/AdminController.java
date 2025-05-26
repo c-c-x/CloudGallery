@@ -60,4 +60,15 @@ public class AdminController {
     public Result<ByIdUserVO> getUserById(@PathVariable Long id){
         return userService.getUserById(id);
     }
+
+    /**
+     * 设置管理员
+     * @param id 用户id
+     * @return 设置结果
+     */
+    @GetMapping("/setAdmin/{id}")
+    @Permission(PermissionType.ADMIN)
+    public Result<Boolean> setAdmin(@PathVariable Long id){
+        return userService.setAdmin(id);
+    }
 }

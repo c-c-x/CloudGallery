@@ -39,4 +39,12 @@ public interface UserMapper extends BaseMapper<User> {
      * @return 用户列表
      */
     List<UserListDTO> getUserList(UserPageDTO userPageDTO);
+
+    /**
+     * 判断用户是否存在
+     * @param id 用户id
+     * @return true/false
+     */
+    @Select("select id from cg_user where id = #{id} and status != 0")
+    boolean isInUser(@Param("id") Long id);
 }

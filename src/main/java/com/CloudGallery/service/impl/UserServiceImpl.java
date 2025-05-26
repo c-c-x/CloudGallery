@@ -6,20 +6,20 @@ import cn.hutool.core.util.ObjectUtil;
 import com.CloudGallery.common.utils.*;
 import com.CloudGallery.constants.*;
 import com.CloudGallery.domain.DTO.*;
+import com.CloudGallery.domain.PO.UserRole;
 import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.LoginUserVO;
 import com.CloudGallery.domain.PO.LoginLog;
 import com.CloudGallery.domain.PO.Rights;
 import com.CloudGallery.domain.VO.UserPageVO;
-import com.CloudGallery.service.ILoginLogService;
+import com.CloudGallery.mapper.SysRoleMapper;
+import com.CloudGallery.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.response.Result;
 import com.CloudGallery.domain.PO.User;
 import com.CloudGallery.mapper.UserMapper;
-import com.CloudGallery.service.ICgRightsService;
-import com.CloudGallery.service.IUserService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
@@ -30,6 +30,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.management.relation.Role;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -72,10 +73,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private UserMapper userMapper;
 
     /**
+     * 角色服务
+     */
+    @Resource
+    private ISysRoleService roleService;
+
+    /**
+     * 用户角色服务
+     */
+    @Resource
+    private IUserRoleService userRoleService;
+
+    /**
+     * 角色mapper
+     */
+    @Resource
+    private SysRoleMapper roleMapper;
+    /**
      * 注册用户
      *
      * @param enrollUserDTO 注册信息
-     * @return
+     * @return 注册结果
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -190,7 +208,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 获取用户列表
-     * @param userPageDTO
+     * @param userPageDTO 用户分页信息
      * @return 用户列表
      */
     @Override
@@ -278,6 +296,42 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 .status(user.getStatus())
                 .build();
         return Result.success(vo);
+    }
+
+
+    /**
+     * 设置管理员
+     * @param id 用户id
+     * @return 设置结果
+     */
+    @Override
+    public Result<Boolean> setAdmin(Long id) {
+        if (ObjectUtil.isEmpty(id)){
+            throw new CgServiceException("用户id不能为空");
+        }
+
+        boolean result =  userMapper.isInUser(id);
+        if (!result){
+            throw new CgServiceException("用户不存在");
+        }
+
+        long roleId =  roleMapper.getRoleId(RoleConstants.ADMIN);
+
+        //判断是否已经是管理员
+        UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
+                .eq(UserRole::getUserId, id)
+                .eq(UserRole::getRoleId, roleId));
+        if (ObjectUtil.isNotEmpty(role)){
+            throw new CgServiceException("用户已经是管理员");
+        }
+
+        UserRole userRole = UserRole.builder()
+                .userId(id)
+                .roleId(roleId)
+                .build();
+
+        return userRoleService.save(userRole) ?
+                Result.success() : Result.fail();
     }
 
 }

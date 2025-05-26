@@ -55,4 +55,12 @@ public interface IUserService extends IService<User> {
      * @return  用户信息
      */
     Result<ByIdUserVO> getUserById(Long id);
+
+
+    /**
+     * 设置管理员
+     * @param id 用户id
+     * @return 设置结果
+     */
+    Result<Boolean> setAdmin(Long id);
 }

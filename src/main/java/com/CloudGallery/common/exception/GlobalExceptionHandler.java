@@ -68,8 +68,21 @@ public class GlobalExceptionHandler {
         return Result.fail(HttpStatus.BAD_REQUEST.value(), "参数缺失", errorMsg);
     }
 
+    // 新增：处理自定义业务异常 CgServiceException
+    @ResponseStatus(HttpStatus.BAD_REQUEST)  // 可根据业务需求调整状态码（如500）
+    @ExceptionHandler(CgServiceException.class)
+    @ResponseBody
+    public Result<String> handleCgServiceException(CgServiceException ex) {
+        // 提取异常中的关键信息返回给前端
+        return Result.fail(
+                ex.getCode() != null ? ex.getCode() : HttpStatus.BAD_REQUEST.value(),  // 使用自定义code或默认状态码
+                ex.getMessage(),  // 前端显示的错误提示
+                ex.getDetailMessage()  // 可选：内部调试用的详细错误信息
+        );
+    }
+
     // 通用错误结果构建方法
-    private Result<Map<String, String>> buildValidationResult(BindingResult bindingResult, String errorTitle) {
+    private Result<Map<String, String>>buildValidationResult(BindingResult bindingResult, String errorTitle) {
         Map<String, String> errorMap = new HashMap<>();
         for (FieldError error : bindingResult.getFieldErrors()) {
             errorMap.put(error.getField(), error.getDefaultMessage() != null
