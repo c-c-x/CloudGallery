@@ -21,7 +21,7 @@ public class AddDictDataDTO {
      * 字典值（存储值，如"1"）
      */
     @NotNull(message = "字典值不能为空")
-    private String value;
+    private Long value;
 
     /**
      * 排序（数值越小越靠前）

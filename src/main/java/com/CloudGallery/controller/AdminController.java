@@ -8,10 +8,14 @@ import com.CloudGallery.domain.DTO.admin.UpdateUserDTO;
 import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.UserPageVO;
+import com.CloudGallery.service.ICgUserLvService;
 import com.CloudGallery.service.IUserService;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * <p>
@@ -24,6 +28,9 @@ public class AdminController {
 
     @Resource
     private IUserService userService;
+
+    @Resource
+    private ICgUserLvService userLvService;
 
     /**
      * 获取用户列表
@@ -81,5 +88,17 @@ public class AdminController {
         return userService.removeAdmin(id);
     }
 
+    /**
+     * 绑定等级
+     * @param userIds 用户id
+     * @param lv 等级
+     * @return 绑定结果
+     */
+    @GetMapping("/bindLv")
+    public Result<Boolean> bindLv(
+            @RequestParam("userIds") List<Long> userIds,
+            Long lv){
+        return userLvService.bindLv(userIds,lv);
+    }
 
 }

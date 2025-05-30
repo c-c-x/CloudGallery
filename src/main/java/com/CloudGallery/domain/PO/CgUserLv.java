@@ -8,68 +8,57 @@ import java.io.Serial;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 系统字典数据表
+ * 用户权益等级关联表
  * </p>
  *
  * @author author
- * @since 2025-05-26
+ * @since 2025-05-27
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("sys_dict_data")
-@AllArgsConstructor
-@NoArgsConstructor
+@TableName("cg_user_lv")
 @Builder
-public class SysDictData implements Serializable {
+public class CgUserLv implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键ID
+     * 自增主键
      */
     @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    private Integer id;
 
     /**
-     * 关联的字典类型编码（对应sys_dict.type_code）
+     * 用户等级，字典表获取
      */
-    private String dictType;
+    private Long lv;
 
     /**
-     * 字典标签（展示值，如"男"）
-     */
-    private String label;
-
-    /**
-     * 字典值（存储值，如"1"）
-     */
-    private Long value;
-
-    /**
-     * 排序（数值越小越靠前）
-     */
-    private Integer sort;
-
-    /**
-     * 状态（1=启用，0=禁用）
+     * 状态
      */
     private Integer status;
 
     /**
-     * 创建时间
+     * 用户id
      */
+    private Long userId;
+
     private LocalDateTime createTime;
 
-    /**
-     * 更新人
-     */
     private Long createUser;
+
+    private LocalDateTime updateTime;
+
+    private Long updateUser;
+
 
 }

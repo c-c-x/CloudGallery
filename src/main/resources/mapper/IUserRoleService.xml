@@ -15,4 +15,19 @@
         <result column="update_user" property="updateUser" />
     </resultMap>
 
+    <insert id="bindRights">
+        insert into cg_rights
+        (user_id, max_storage, max_image_size, status, update_user)
+        values
+        <foreach collection="userIds" item="userId" separator=",">
+            (
+            #{userId},
+            #{maxStorageSize},
+            #{maxImageSize},
+            1,
+            #{updateUser}
+            )
+        </foreach>
+    </insert>
+
 </mapper>
