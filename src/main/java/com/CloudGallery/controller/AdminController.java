@@ -11,7 +11,6 @@ import com.CloudGallery.domain.VO.UserPageVO;
 import com.CloudGallery.service.ICgUserLvService;
 import com.CloudGallery.service.IUserService;
 import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -101,4 +100,15 @@ public class AdminController {
         return userLvService.bindLv(userIds,lv);
     }
 
+
+    /**
+     * 批量删除用户
+     * @param userIds 用户id集合
+     * @return 删除结果
+     */
+    @DeleteMapping("deleteUsers")
+    @Permission(PermissionType.ADMIN)
+    public Result<Boolean> removeUsers(@RequestParam("userIds") List<Long> userIds){
+        return userService.deleteUsers(userIds);
+    }
 }

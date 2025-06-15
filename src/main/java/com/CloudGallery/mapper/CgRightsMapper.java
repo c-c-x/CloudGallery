@@ -2,6 +2,7 @@ package com.CloudGallery.mapper;
 
 import com.CloudGallery.domain.PO.Rights;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -28,4 +29,11 @@ public interface CgRightsMapper extends BaseMapper<Rights> {
                        @Param("maxStorageSize") long maxStorageSize,
                        @Param("maxImageSize")long maxImageSize,
                        @Param("updateUser")  long updateUser);
+
+    /**
+     * 修改用户权益
+     * @param userIds 用户id
+     * @param status 状态
+     */
+    boolean updateRights(@Param("userIds")List<Long> userIds, @Param("status") int status);
 }

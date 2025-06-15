@@ -25,7 +25,8 @@ import org.springframework.stereotype.Service;
  * @since 2025-05-26
  */
 @Service
-public class SysDictDataServiceImpl extends ServiceImpl<SysDictDataMapper, SysDictData> implements ISysDictDataService {
+public class SysDictDataServiceImpl extends ServiceImpl<SysDictDataMapper, SysDictData> implements ISysDictDataService
+{
 
     /**
      * 字典服务
@@ -35,22 +36,26 @@ public class SysDictDataServiceImpl extends ServiceImpl<SysDictDataMapper, SysDi
 
     /**
      * 添加字典数据
+     *
      * @param addDictDataDTO 请求参数
      * @return 添加结果
      */
     @Override
-    public Result<Boolean> addDictData(AddDictDataDTO addDictDataDTO) {
+    public Result<Boolean> addDictData(AddDictDataDTO addDictDataDTO)
+    {
         //1.查询字典分类数据是否存在
         SysDict dict = dictService.getOne(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getTypeCode, addDictDataDTO.getDictType()));
-        if (ObjectUtil.isEmpty(dict)){
+        if (ObjectUtil.isEmpty(dict))
+        {
             throw new CgServiceException("字典分类不存在");
         }
         //2.查询字典数据是否存在
         SysDictData dictData = this.getOne(new LambdaQueryWrapper<SysDictData>()
                 .eq(SysDictData::getDictType, addDictDataDTO.getDictType())
                 .eq(SysDictData::getValue, addDictDataDTO.getValue()));
-        if (ObjectUtil.isNotEmpty(dictData)){
+        if (ObjectUtil.isNotEmpty(dictData))
+        {
             throw new CgServiceException("字典数据已存在");
         }
         return this.save(SysDictData.builder()

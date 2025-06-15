@@ -4,9 +4,7 @@ import com.CloudGallery.domain.DTO.admin.UserListDTO;
 import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.CloudGallery.domain.PO.User;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +12,6 @@ import java.util.Set;
 /**
  * 用户表
  */
-@Mapper
 public interface UserMapper extends BaseMapper<User> {
 
     /**
@@ -46,4 +43,12 @@ public interface UserMapper extends BaseMapper<User> {
      */
     @Select("select id from cg_user where id = #{id} and status != 0")
     boolean isInUser(@Param("id") Long id);
+
+
+    /**
+     * 批量删除用户
+     * @param userIds 用户id
+     * @return  删除结果
+     */
+    boolean removeUsers(@Param("userIds") List<Long> userIds);
 }

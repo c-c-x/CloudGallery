@@ -12,6 +12,8 @@ import com.CloudGallery.domain.DTO.pubilc.EnrollUserDTO;
 import com.CloudGallery.domain.DTO.pubilc.LoginUserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
+
 public interface IUserService extends IService<User> {
     /**
      * 注册用户
@@ -70,4 +72,11 @@ public interface IUserService extends IService<User> {
      * @return 移除结果
      */
     Result<Boolean> removeAdmin(Long id);
+
+    /**
+     * 批量删除用户
+     * @param userIds 用户id集合
+     * @return 删除结果
+     */
+    Result<Boolean> deleteUsers(List<Long> userIds);
 }

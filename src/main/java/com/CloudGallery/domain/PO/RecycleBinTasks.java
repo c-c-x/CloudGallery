@@ -1,10 +1,9 @@
 package com.CloudGallery.domain.PO;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-
-import java.io.Serial;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 
@@ -13,52 +12,52 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 用户权益等级关联表
+ * 回收站清理任务表
  * </p>
  *
  * @author author
- * @since 2025-05-27
+ * @since 2025-06-15
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("cg_user_lv")
+@TableName("recycle_bin_tasks")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CgUserLv implements Serializable {
+public class RecycleBinTasks implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-     * 自增主键
+     * 任务ID
      */
     @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    private Long id;
 
     /**
-     * 用户等级，字典表获取
+     * 图片ID
      */
-    private Long lv;
+    @TableField("image_id")
+    private Long imageId;
 
     /**
-     * 状态
+     * 计划删除时间
      */
+    @TableField("delete_time")
+    private LocalDateTime deleteTime;
+
+    /**
+     * 任务状态(0=待处理,1=处理中,2=处理完毕,3=任务取消)
+     */
+    @TableField("status")
     private Integer status;
 
     /**
-     * 用户id
+     * 创建时间
      */
-    private Long userId;
-
+    @TableField("create_time")
     private LocalDateTime createTime;
-
-    private Long createUser;
-
-    private LocalDateTime updateTime;
-
-    private Long updateUser;
 
 
 }

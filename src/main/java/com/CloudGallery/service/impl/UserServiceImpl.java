@@ -10,32 +10,32 @@ import com.CloudGallery.domain.DTO.admin.UserListDTO;
 import com.CloudGallery.domain.DTO.admin.UserPageDTO;
 import com.CloudGallery.domain.DTO.pubilc.EnrollUserDTO;
 import com.CloudGallery.domain.DTO.pubilc.LoginUserDTO;
-import com.CloudGallery.domain.PO.UserRole;
+import com.CloudGallery.domain.PO.*;
 import com.CloudGallery.domain.VO.ByIdUserVO;
 import com.CloudGallery.domain.VO.LoginUserVO;
-import com.CloudGallery.domain.PO.LoginLog;
-import com.CloudGallery.domain.PO.Rights;
 import com.CloudGallery.domain.VO.UserPageVO;
-import com.CloudGallery.mapper.SysRoleMapper;
+import com.CloudGallery.mapper.*;
 import com.CloudGallery.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.CloudGallery.common.exception.CgServiceException;
 import com.CloudGallery.common.response.Result;
-import com.CloudGallery.domain.PO.User;
-import com.CloudGallery.mapper.UserMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.executor.BatchResult;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Set;
+import javax.annotation.RegEx;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Slf4j
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService
+{
 
     /**
      * 权益服务
@@ -92,6 +93,96 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      */
     @Resource
     private SysRoleMapper roleMapper;
+
+    /**
+     * 图片服务
+     */
+    @Resource
+    private ICgImagesService imagesService;
+
+    /**
+     * 图片mapper
+     */
+    @Resource
+    private CgImagesMapper imagesMapper;
+
+    /**
+     * 权益mapper
+     */
+    @Resource
+    private CgRightsMapper rightsMapper;
+
+    /**
+     * 回收站任务服务
+     */
+    private IRecycleBinTasksService recycleBinTasksService;
+
+    /**
+     * 回收站任务mapper
+     */
+    private RecycleBinTasksMapper recycleBinTasksMapper;
+
+    /**
+     * 批量删除用户 等于注销用户
+     * <br>
+     * 区别在于一个是否管理员主动删除，一个是由用户主动删除
+     * <br/>
+     *
+     * @param userIds 用户id集合
+     * @return 删除结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Result<Boolean> deleteUsers(List<Long> userIds)
+    {
+        if (ObjectUtil.isEmpty(userIds))
+        {
+            throw new CgServiceException("用户id不能为空");
+        }
+        //1.判断用户是否都存在
+        usersIsNotNull(userIds);
+        //2.解绑用户权益
+        if (!rightsMapper.updateRights(userIds, StatusConstants.NO_STATUS))
+        {
+            throw new CgServiceException("修改用户权益失败");
+        }
+
+        //3 给图片设置定时任务，并且由定时任务空值过期时间，如果过期时间已经到了的话用户还是没有取消删除的话那就删除minio里的孤立文件
+        List<CgImages> images = imagesService.list(new LambdaQueryWrapper<CgImages>()
+                .in(CgImages::getUserId, userIds)
+                .eq(CgImages::getStatus, StatusConstants.YES_STATUS));
+        //3.2 删除图片
+        LocalDateTime now = LocalDateTime.now();
+        if (ObjectUtil.isNotEmpty(images))
+        {
+            if (imagesMapper.removeImages(images, now))
+            {
+                throw new CgServiceException("删除图片失败");
+            }
+            //3.3 创建回收站图片表任务
+            List<RecycleBinTasks> recycleBinTasksList = new LinkedList<>();
+            for (CgImages image : images)
+            {
+                RecycleBinTasks recycleBinTasks = RecycleBinTasks.builder()
+                        .imageId(image.getImageId())
+                        .deleteTime(now.plusDays(15))
+                        .status(TaskConstants.TASK_STATUS_RUNNING)
+                        .createTime(now)
+                        .build();
+                recycleBinTasksList.add(recycleBinTasks);
+            }
+
+            if (!recycleBinTasksMapper.addRecycleBinTasks(recycleBinTasksList))
+            {
+                throw new CgServiceException("定时任务添加失败");
+            }
+        }
+
+        //4 删除用户 逻辑删除
+        userMapper.removeUsers(userIds);
+        return Result.success();
+    }
+
     /**
      * 注册用户
      *
@@ -100,9 +191,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<Boolean> enrollUser(EnrollUserDTO enrollUserDTO) {
+    public Result<Boolean> enrollUser(EnrollUserDTO enrollUserDTO)
+    {
         // 构建用户对象
-        try {
+        try
+        {
             User user = User.builder()
                     .id(snowflakeGenerator.next())
                     .userName(enrollUserDTO.getUserName())
@@ -113,7 +206,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             User one = this.getOne(new LambdaQueryWrapper<User>()
                     .eq(user.getUserName() != null, User::getUserName, user.getUserName())
                     .eq(User::getStatus, StatusConstants.YES_STATUS));
-            if (one != null) {
+            if (one != null)
+            {
                 throw new CgServiceException("用户名已存在");
             }
             //  保存用户
@@ -122,7 +216,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             Rights isRights = cgRightsService.getOne(new LambdaQueryWrapper<Rights>()
                     .eq(Rights::getUserId, user.getId())
                     .eq(Rights::getStatus, StatusConstants.YES_STATUS));
-            if (isRights != null) {
+            if (isRights != null)
+            {
                 throw new CgServiceException("图库已存在，请联系管理员");
             }
             Rights rights = Rights.builder()
@@ -133,7 +228,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     .build();
             cgRightsService.save(rights);
             return Result.success();
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             log.error("注册用户异常------------------>{}", e.getMessage());
             throw new CgServiceException("注册用户失败" + e.getMessage(), 500);
         }
@@ -148,44 +244,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<LoginUserVO> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request) {
+    public Result<LoginUserVO> loginUser(LoginUserDTO loginUserDTO, HttpServletRequest request)
+    {
         //校验登录信息
         User user = this.getOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUserName, loginUserDTO.getUserName())
                 .eq(User::getStatus, StatusConstants.YES_STATUS));
-        if (user == null){
+        if (user == null)
+        {
             throw new CgServiceException("用户名或密码错误");
         }
 
         //验证登录权限是否足够
         if (!loginUserDTO.getPermissions().equals(LoginConstants.ADMIN) &&
-                !loginUserDTO.getPermissions().equals(LoginConstants.USER)){
+                !loginUserDTO.getPermissions().equals(LoginConstants.USER))
+        {
             throw new CgServiceException("登录失败，权限不足");
         }
         Set<String> roles = userMapper.getRoles(user.getId());
-        if (loginUserDTO.getPermissions().equals(LoginConstants.ADMIN)) {
-            if (!roles.contains(RoleConstants.ADMIN )|| StringUtils.isEmpty(loginUserDTO.getPermissions())) {
+        if (loginUserDTO.getPermissions().equals(LoginConstants.ADMIN))
+        {
+            if (!roles.contains(RoleConstants.ADMIN) || StringUtils.isEmpty(loginUserDTO.getPermissions()))
+            {
                 throw new CgServiceException("登录失败，权限不足");
-            }else if (!roles.contains(RoleConstants.CG_USER)){
+            } else if (!roles.contains(RoleConstants.CG_USER))
+            {
                 throw new CgServiceException("登录失败，权限不足");
             }
         }
 
-        try {
+        try
+        {
             String password = DesensitizationUtils.decrypt(user.getPassword());
-            if (!password.equals(loginUserDTO.getPassword())) {
+            if (!password.equals(loginUserDTO.getPassword()))
+            {
                 throw new CgServiceException("用户名或密码错误");
             }
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             throw new CgServiceException("登录失败," + e.getMessage());
         }
 
         //获取用户登录日志
         String ip = IpUtils.getIpAddr(request);
         String cityInfo = null;
-        try {
+        try
+        {
             cityInfo = IpUtils.getCityInfo(ip);
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             log.error("获取ip归属地信息失败！");
         }
         LoginLog loginLog = LoginLog.builder()
@@ -211,30 +318,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 获取用户列表
+     *
      * @param userPageDTO 用户分页信息
      * @return 用户列表
      */
     @Override
-    public Result<UserPageVO> getUserList(UserPageDTO userPageDTO) {
+    public Result<UserPageVO> getUserList(UserPageDTO userPageDTO)
+    {
         //获取用户列表
         PageHelper.startPage(userPageDTO.getPageNum(), userPageDTO.getPageSize());
         List<UserListDTO> userPageVOList = userMapper.getUserList(userPageDTO);
         PageInfo pageInfo = new PageInfo(userPageVOList);
         UserPageVO vo = new UserPageVO();
-        BeanUtil.copyProperties(pageInfo,vo);
+        BeanUtil.copyProperties(pageInfo, vo);
         return Result.success(vo);
     }
 
 
     /**
      * 登出
+     *
      * @return 登出结果
      */
     @Override
-    public Result<Boolean> loginOut() {
+    public Result<Boolean> loginOut()
+    {
         Long userId = UserUtils.getUserId();
         Boolean delete = stringRedisTemplate.delete(RedisConstants.USER_TOKEN_KEY + userId);
-        if (delete){
+        if (delete)
+        {
             return Result.success();
         }
         throw new CgServiceException("身份已过期");
@@ -243,16 +355,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 修改用户信息
+     *
      * @param updateUserDTO 修改用户信息
      * @return 修改结果
      */
     @Override
-    public Result<Boolean> updateUser(UpdateUserDTO updateUserDTO) {
-        if (ObjectUtil.isEmpty(updateUserDTO)){
+    public Result<Boolean> updateUser(UpdateUserDTO updateUserDTO)
+    {
+        if (ObjectUtil.isEmpty(updateUserDTO))
+        {
             throw new CgServiceException("修改信息不能为空");
         }
 
-        try {
+        try
+        {
             User user = User.builder()
                     .id(updateUserDTO.getId())
                     .userName(updateUserDTO.getUserName())
@@ -265,7 +381,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     .status(updateUserDTO.getStatus())
                     .build();
             return userMapper.updateById(user) != 0 ? Result.success() : Result.fail();
-        }catch (Exception e){
+        } catch (Exception e)
+        {
             throw new CgServiceException("修改用户信息失败" + e.getMessage());
         }
     }
@@ -273,17 +390,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 获取指定用户信息
+     *
      * @param id 用户id
-     * @return  用户信息
+     * @return 用户信息
      */
     @Override
-    public Result<ByIdUserVO> getUserById(Long id) {
-        if (ObjectUtil.isEmpty(id)){
+    public Result<ByIdUserVO> getUserById(Long id)
+    {
+        if (ObjectUtil.isEmpty(id))
+        {
             throw new CgServiceException("用户id不能为空");
         }
 
         User user = this.getById(id);
-        if (ObjectUtil.isEmpty(user)){
+        if (ObjectUtil.isEmpty(user))
+        {
             throw new CgServiceException("用户不存在");
         }
 
@@ -304,26 +425,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 设置管理员
+     *
      * @param id 用户id
      * @return 设置结果
      */
     @Override
-    public Result<Boolean> setAdmin(Long id) {
-        if (ObjectUtil.isEmpty(id)){
+    public Result<Boolean> setAdmin(Long id)
+    {
+        if (ObjectUtil.isEmpty(id))
+        {
             throw new CgServiceException("用户id不能为空");
         }
 
-        boolean result =  userMapper.isInUser(id);
-        if (!result){
+        boolean result = userMapper.isInUser(id);
+        if (!result)
+        {
             throw new CgServiceException("用户不存在");
         }
 
         //  获取管理员角色id
-        long roleId =  roleMapper.getRoleId(RoleConstants.ADMIN);
+        long roleId = roleMapper.getRoleId(RoleConstants.ADMIN);
 
         //判断是否已经是管理员
 
-        if (isRole(id,roleId)){
+        if (isRole(id, roleId))
+        {
             throw new CgServiceException("用户已经是管理员");
         }
 
@@ -338,23 +464,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 移除管理员
+     *
      * @param id 用户id
      * @return 移除结果
      */
     @Override
-    public Result<Boolean> removeAdmin(Long id) {
+    public Result<Boolean> removeAdmin(Long id)
+    {
         Long userId = UserUtils.getUserId();
-        if (userId.equals(id)){
+        if (userId.equals(id))
+        {
             throw new CgServiceException("不能移除自己");
         }
 
         //  获取管理员角色id
-        long roleId =  roleMapper.getRoleId(RoleConstants.ADMIN);
+        long roleId = roleMapper.getRoleId(RoleConstants.ADMIN);
         UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
                 .eq(UserRole::getUserId, id)
                 .eq(UserRole::getRoleId, roleId));
-        if (ObjectUtil.isEmpty(role)){
-           throw new CgServiceException("用户不是管理员");
+        if (ObjectUtil.isEmpty(role))
+        {
+            throw new CgServiceException("用户不是管理员");
         }
 
         return userRoleService.removeById(role.getId()) ? Result.success() : Result.fail();
@@ -364,15 +494,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /**
      * 判断是否为某个角色
+     *
      * @param userId 用户id
      * @param roleId 角色id
      * @return 判断结果
      */
-    private boolean isRole(Long userId,Long roleId){
+    private boolean isRole(Long userId, Long roleId)
+    {
         UserRole role = userRoleService.getOne(new LambdaQueryWrapper<UserRole>()
                 .eq(UserRole::getUserId, userId)
                 .eq(UserRole::getRoleId, roleId));
         return ObjectUtil.isNotEmpty(role);
 
+    }
+
+
+    /**
+     * 判断用户是否存在
+     *
+     * @param userIds 用户id
+     */
+    private void usersIsNotNull(List<Long> userIds)
+    {
+        List<User> userList = this.list(new LambdaQueryWrapper<User>()
+                .in(User::getId, userIds)
+                .eq(User::getStatus, StatusConstants.YES_STATUS));
+        if (ObjectUtil.isEmpty(userIds) && userList.size() != userIds.size())
+        {
+            throw new CgServiceException("用户不存在");
+        }
     }
 }

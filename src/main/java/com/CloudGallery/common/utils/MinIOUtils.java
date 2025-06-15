@@ -54,8 +54,7 @@ public class MinIOUtils {
     public void createMinioClient() {
    
         try {
-   
-            if (null == minioClient) {
+            if (minioClient == null) {
    
                 log.info("开始创建 MinioClient...");
                 minioClient = MinioClient
@@ -67,8 +66,7 @@ public class MinIOUtils {
                 log.info("创建完毕 MinioClient...");
             }
         } catch (Exception e) {
-   
-            log.error("MinIO服务器异常：{}", e);
+            log.error("MinIO服务器异常:", e);
         }
     }
 
@@ -81,7 +79,7 @@ public class MinIOUtils {
         return endpoint + SEPARATOR + bucketName + SEPARATOR;
     }
 
-    /******************************  Operate Bucket Start  ******************************/
+    /*****************************  Operate Bucket Start  ******************************/
 
     /**
      * 启动SpringBoot容器的时候初始化Bucket
@@ -98,8 +96,6 @@ public class MinIOUtils {
 
     /**
      *  判断Bucket是否存在，true：存在，false：不存在
-     * @return
-     * @throws Exception
      */
     public static boolean bucketExists(String bucketName) throws Exception {
    
